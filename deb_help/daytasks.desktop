@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Icon[en_US]=daytasks
+Name[en_US]=DayTasks
+Exec=daytasks
+Comment[en_US]=The simple daily todo list
+Name=DayTasks
+Comment=The simple daily todo list
+Icon=daytasks
