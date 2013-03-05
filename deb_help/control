@@ -1,0 +1,21 @@
+Source: daytasks
+Section: misc
+Priority: extra
+Maintainer: Zach Burnham <thejambi@gmail.com>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev, 
+ libgee-dev (>= 0.6.4),
+ libgdk-pixbuf2.0-dev (>= 2.26.1),
+ libglib2.0-dev (>= 2.32.1),
+ libgtk-3-dev (>= 3.4.1),
+ valac-0.16 (>= 0.16.0),
+ cmake (>= 2.8.7)
+Standards-Version: 3.9.2
+Homepage: http://burnsoftware.wordpress.com/daytasks/
+#Vcs-Git: git://git.debian.org/collab-maint/daytasks.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/daytasks.git;a=summary
+
+Package: daytasks
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: The simple daily todo list
+ DayTasks is a minimalistic todo list compatible with todo.txt.
