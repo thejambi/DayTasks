@@ -44,7 +44,7 @@ public class Task : GLib.Object, Comparable<Task> {
 
 	public void loadPriority() {
 		if (GLib.Regex.match_simple("[(][A-Z][)]", this.fullText.substring(0, 3))) {
-			Zystem.debug("IT'S GOT PRIORITY!  " + this.fullText.get_char(1).to_string());
+			//Zystem.debug("IT'S GOT PRIORITY!  " + this.fullText.get_char(1).to_string());
 			this.priority = this.fullText.get_char(1);
 		}
 	}
@@ -52,7 +52,7 @@ public class Task : GLib.Object, Comparable<Task> {
 	public void loadCreationDate() {
 		if (this.hasPriority()) {
 			if (this.fullText.substring(3, 1) == " " && GLib.Regex.match_simple(yyyymmddRegexString, this.fullText.substring(4, 10))) {
-				Zystem.debug("Is this the date string?: " + this.fullText.substring(3, 11));
+				//Zystem.debug("Is this the date string?: " + this.fullText.substring(3, 11));
 				//			Zystem.debug("FOUND CREATION DATE");
 				this.hasCreationDate = true;
 				this.creationDate = new DateTime.local(int.parse(this.fullText.substring(4, 4)), 
@@ -62,8 +62,8 @@ public class Task : GLib.Object, Comparable<Task> {
 		}
 		else {
 			if (GLib.Regex.match_simple(yyyymmddRegexString, this.fullText.substring(0, 10))) {
-				Zystem.debug("Is this the date string?: " + this.fullText.substring(0, 10));
-				Zystem.debug("FOUND CREATION DATE");
+				//Zystem.debug("Is this the date string?: " + this.fullText.substring(0, 10));
+				//Zystem.debug("FOUND CREATION DATE");
 				this.hasCreationDate = true;
 				this.creationDate = new DateTime.local(int.parse(this.fullText.substring(0, 4)), 
 				                                       int.parse(this.fullText.substring(5, 2)), 
@@ -102,10 +102,10 @@ public class Task : GLib.Object, Comparable<Task> {
 
 		if (this.hasCreationDate && this.hasPriority()) {
 			this.displayText = this.displayText.splice(3, 14);
-			Zystem.debug("I JUST SPLICED IT? " + this.displayText);
+			//Zystem.debug("I JUST SPLICED IT? " + this.displayText);
 		} else if (this.hasCreationDate && !this.hasPriority()) {
 			this.displayText = this.displayText.splice(0, 10);
-			Zystem.debug("I JUST SPLICED IT? " + this.displayText);
+			//Zystem.debug("I JUST SPLICED IT? " + this.displayText);
 		}
 	}
 

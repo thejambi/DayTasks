@@ -22,7 +22,8 @@ using Gtk;
 public class Main : Window {
 
 	// SET THIS TO TRUE BEFORE BUILDING TARBALL
-	private const bool isInstalled = true;
+	private const bool isInstalled = false;
+	
 	private int width;
 	private int height;
 	private string lastKeyName;
@@ -63,9 +64,9 @@ public class Main : Window {
 			Zystem.debug("Let's open a file...");
 			this.openFile();
 		});
-		tasksMenu.append(menuOpenFile);
+//		tasksMenu.append(menuOpenFile);
 		
-		Gtk.MenuItem tasksMenuItem = new Gtk.MenuItem.with_label("Notes");
+		Gtk.MenuItem tasksMenuItem = new Gtk.MenuItem.with_label("Tasks");
 		tasksMenuItem.set_submenu(tasksMenu);
 		menubar.append(tasksMenuItem);
 
@@ -84,7 +85,7 @@ public class Main : Window {
 
 		Gtk.MenuItem settingsMenuItem = new Gtk.MenuItem.with_label("Settings");
 		settingsMenuItem.set_submenu(settingsMenu);
-		menubar.append(settingsMenuItem);
+		//menubar.append(settingsMenuItem);
 
 		// Set up Help menu
 		var helpMenu = new Gtk.Menu();
@@ -101,8 +102,11 @@ public class Main : Window {
 
 		var helpMenuItem = new Gtk.MenuItem.with_label("Help");
 		helpMenuItem.set_submenu(helpMenu);
-		menubar.append(helpMenuItem);
-		
+		//menubar.append(helpMenuItem);
+
+
+		// Create toolbar
+		var toolbar = new Toolbar();
 
 		
 		this.txtTask = new TextView();
@@ -114,6 +118,7 @@ public class Main : Window {
 		this.editor = new TaskEditor(this.txtTask.buffer);
 
 		this.taskListView = new TreeView();
+		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
 		this.setuptaskListView();
 
 		this.editor = new TaskEditor(this.txtTask.buffer);
@@ -140,7 +145,8 @@ public class Main : Window {
 		paned.position = 60;
 
 		var vbox1 = new Box (Orientation.VERTICAL, 0);
-		vbox1.pack_start(menubar, false, true, 0);
+//		vbox1.pack_start(menubar, false, true, 0);
+		vbox1.pack_start(toolbar, false, true, 0);
 		vbox1.pack_start (paned, true, true, 2);
 
 		add(vbox1);
@@ -158,9 +164,10 @@ public class Main : Window {
 
 	private void setuptaskListView() {
 		var listmodel = new ListStore(1, typeof (string));
-		this.taskListView.set_model(listmodel);
+		this.taskListView.model = listmodel;
 
-		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
+		// This is now done when instantiating taskListView
+//		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
 
 		this.loadTasksList();
 
@@ -192,7 +199,9 @@ public class Main : Window {
 
 		this.editor.clear();
 
-		int index = -1;
+		this.todoFile.unsetActiveTask();
+
+		/*int index = -1;
 		var selection = this.taskListView.get_selection() as TreeSelection;
 		selection.set_mode(SelectionMode.SINGLE);
 		TreeModel model;
@@ -209,16 +218,42 @@ public class Main : Window {
 		Task task = this.todoFile.getTaskAtIndex(index);
 		Zystem.debug(task.fullText);
 
-		this.todoFile.changeActiveTask(index);
+		this.todoFile.changeActiveTask(index);*/
 	}
 
 	/**
 	 * This method called on a double-click of a task, or hitting enter on a selected task.
 	 */
-	public void openTask(TreePath path, TreeViewColumn col) {
+	private void openTask(TreePath path, TreeViewColumn col) {
 		// activeTask is decided when the row was selected or clicked first time
+		// NO, THAT'S NOT TRUE ANYMORE! DON'T LISTEN TO THAT ^^^
+
+		this.setActiveTask();
+		
 		this.editor.startNewTask(this.todoFile.getActiveTaskText()); // Load task text
     }
+
+	private void setActiveTask() {
+		// Set active task
+		int index = -1;
+		var selection = this.taskListView.get_selection() as TreeSelection;
+		selection.set_mode(SelectionMode.SINGLE);
+		TreeModel model;
+		TreeIter iter;
+		if (!selection.get_selected(out model, out iter)) {
+			index = -1;
+		} else {
+			TreePath path = model.get_path(iter);
+			index = int.parse(path.to_string());
+		}
+
+		Zystem.debug("The active task index is: " + index.to_string());
+
+		Task task = this.todoFile.getTaskAtIndex(index);
+		Zystem.debug(task.fullText);
+
+		this.todoFile.changeActiveTask(index);
+	}
 
 	public bool onKeyPress(Gdk.EventKey key) {
 		uint keyval;
@@ -247,8 +282,12 @@ public class Main : Window {
 		else if (ctrl) { // Ctrl+?
 			switch (keyName) {
 				case "Return":
-					this.saveActiveTask();
-					return true;
+					if (this.txtTask.has_focus) {
+						this.saveActiveTask();
+						return true;
+					} else {
+						Zystem.debug("No saving task for you!");
+					}
 					break;
 				case "r":
 					this.reloadTodoFile();
@@ -265,10 +304,39 @@ public class Main : Window {
 					break;
 			}
 		}
-		else if (!(ctrl || shift || keyName == this.lastKeyName)) { // Just the one key
+		else if (!(ctrl || shift/* || keyName == this.lastKeyName*/)) { // Just the one key
 			switch (keyName) {
+				case "Delete":
+					if (this.taskListView.has_focus) {
+						Zystem.debug("DELETING TASK");
+						this.deleteSelectedTask();
+					} else {
+						Zystem.debug("No deleting!");
+					}
+					break;
 				case "Return":
-					this.saveActiveTask();
+					if (this.txtTask.has_focus) {
+						this.saveActiveTask();
+						return true;
+					} else if (this.taskListView.has_focus) {
+						return false;
+					} else {
+						Zystem.debug("No saving task for you!");
+					}
+					break;
+				case "c":
+				case "x":
+					if (this.taskListView.has_focus) {
+						this.markSelectedTaskComplete();
+						return true;
+					} else {
+						Zystem.debug("Not marking task complete.");
+					}
+					break;
+				case "r":
+					if (!this.txtTask.has_focus) {
+						this.reloadTodoFile();
+					}
 					return true;
 					break;
 				default:
@@ -292,12 +360,29 @@ public class Main : Window {
 			Zystem.debug("I'm not going to update your empty task...");
 		} else {
 			Zystem.debug("Updating text of task!!!");
-			this.todoFile.updateActiveTaskText(this.editor.getText());
-			this.todoFile.saveFile();
+			// If has active task, update it. If no set active task, add new task.
+			if (this.todoFile.hasActiveTask()) {
+				this.todoFile.updateActiveTaskText(this.editor.getText());
+			} else {
+				this.todoFile.addNewTask(this.editor.getText());
+			}
 			this.editor.startNewTask("");
-			this.todoFile.unsetActiveTask();
 			this.reloadTodoFile();
 		}
+	}
+
+	private void deleteSelectedTask() {
+		Zystem.debug("GOING TO DELETE NOW");
+		this.setActiveTask();
+		this.todoFile.deleteActiveTask();
+//		this.todoFile.saveFile();
+		this.reloadTodoFile();
+	}
+
+	private void markSelectedTaskComplete() {
+		this.setActiveTask();
+		this.todoFile.completeActiveTask();
+		this.reloadTodoFile();
 	}
 
 	private void loadTodoFile() {
