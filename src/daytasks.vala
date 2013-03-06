@@ -33,6 +33,8 @@ public class Main : Window {
 	private TodoTxtFile todoFile;
 	private TaskEditor editor;
 	private Paned paned;
+	private ToolButton completeButton;
+	private ToolButton deleteButton;
 
 	public Main () {
 
@@ -42,7 +44,7 @@ public class Main : Window {
 
 		this.lastKeyName = "";
 
-		this.loadTodoFile();
+//		this.loadTodoFile();
 
 		this.title = "DayTasks";
 		this.window_position = WindowPosition.CENTER;
@@ -61,8 +63,7 @@ public class Main : Window {
 		var tasksMenu = new Gtk.Menu();
 		var menuOpenFile = new Gtk.MenuItem.with_label("Open todo.txt file");
 		menuOpenFile.activate.connect(() => {
-			Zystem.debug("Let's open a file...");
-			this.openFile();
+			this.openDirectory();
 		});
 //		tasksMenu.append(menuOpenFile);
 		
@@ -108,18 +109,47 @@ public class Main : Window {
 		// Create toolbar
 		var toolbar = new Toolbar();
 
+		var openButton = new ToolButton(null, "Open...");
+		openButton.clicked.connect(() => { this.openDirectory(); });
+
+		var newButton = new ToolButton(null, "New Task");
+		newButton.clicked.connect(() => { this.startNewTask(); });
+		
+		this.completeButton = new ToolButton(null, "Complete");
+		completeButton.clicked.connect(() => { this.markSelectedTaskComplete(); });
+		
+		this.deleteButton = new ToolButton(null, "Delete");
+		deleteButton.clicked.connect(() => { this.deleteSelectedTask(); });
+
+		toolbar.insert(openButton, -1);
+		toolbar.insert(newButton, -1);
+		toolbar.insert(this.completeButton, -1);
+		toolbar.insert(this.deleteButton, -1);
 		
 		this.txtTask = new TextView();
-
-		this.txtTask.buffer.changed.connect(() => {
+		this.txtTask.focus_in_event.connect(() => {
+			if (!this.todoFile.hasActiveTask()) {
+				this.enableTaskActionButtons(false);
+			}
+			return false;
+		});
+		/*this.txtTask.focus_out_event.connect(() => {
+			if (!this.todoFile.hasActiveTask()) {
+				this.enableTaskActionButtons(true);
+			}
+			return false;
+		});*/
+		/*this.txtTask.buffer.changed.connect(() => {
 			//onTextChanged(this.txtTask.buffer);
 			Zystem.debug("The text has changed!");
-		});
+		});*/
 		this.editor = new TaskEditor(this.txtTask.buffer);
 
 		this.taskListView = new TreeView();
 		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
-		this.setuptaskListView();
+
+		// Load todoFile and sets up taskListView with list of tasks
+		this.reloadTodoFile();
 
 		this.editor = new TaskEditor(this.txtTask.buffer);
 		this.txtTask.pixels_above_lines = 2;
@@ -192,6 +222,12 @@ public class Main : Window {
 		this.loadingTasks = false;
 	}
 
+	private void unselectTasks() {
+		var selection = this.taskListView.get_selection() as TreeSelection;
+		selection.unselect_all();
+		this.enableTaskActionButtons(false);
+	}
+
 	private void taskSelected(TreeSelection treeSelection) {
 		if (this.loadingTasks) {
 			return;
@@ -200,6 +236,8 @@ public class Main : Window {
 		this.editor.clear();
 
 		this.todoFile.unsetActiveTask();
+		
+		this.enableTaskActionButtons(true);
 
 		/*int index = -1;
 		var selection = this.taskListView.get_selection() as TreeSelection;
@@ -336,8 +374,10 @@ public class Main : Window {
 				case "r":
 					if (!this.txtTask.has_focus) {
 						this.reloadTodoFile();
+						return true;
+					} else {
+						return false;
 					}
-					return true;
 					break;
 				default:
 					break;
@@ -372,6 +412,9 @@ public class Main : Window {
 	}
 
 	private void deleteSelectedTask() {
+		// Dialog if ok to delete
+		/*var dialog = new Dialog.with_buttons("Delete Task?", null, 0, Stock.OK, ResponseType.OK, null);
+		dialog.show_all();*/
 		Zystem.debug("GOING TO DELETE NOW");
 		this.setActiveTask();
 		this.todoFile.deleteActiveTask();
@@ -385,29 +428,37 @@ public class Main : Window {
 		this.reloadTodoFile();
 	}
 
-	private void loadTodoFile() {
-		this.todoFile = new TodoTxtFile(UserData.getDefaultTodoFilePath());
-	}
-
 	private void reloadTodoFile() {
-		this.loadTodoFile();
+		this.todoFile = new TodoTxtFile(UserData.getTodoFilePath());
 		this.setuptaskListView();
+		this.enableTaskActionButtons(false);
 	}
 
+	private void startNewTask() {
+		this.todoFile.unsetActiveTask();
+		this.unselectTasks();
+		this.editor.startNewTask("");
+		this.txtTask.has_focus = true;
+	}
+	
 
-	public void openFile() {
-		Zystem.debug("Let's open your todo.txt file!");
-
-		var fileChooser = new FileChooserDialog("Choose Todo.txt file", this,
-												FileChooserAction.OPEN,
+	public void openDirectory() {
+		var fileChooser = new FileChooserDialog("Choose tasks directory", this,
+												FileChooserAction.SELECT_FOLDER,
 												Stock.CANCEL, ResponseType.CANCEL,
 												Stock.OPEN, ResponseType.ACCEPT);
 		if (fileChooser.run() == ResponseType.ACCEPT) {
 			string path = fileChooser.get_filename();
-			UserData.setTodoFilePath(path);
-			this.loadTasksList();
+			UserData.setTasksDir(path);
+			
+			this.reloadTodoFile();
 		}
 		fileChooser.destroy();
+	}
+
+	private void enableTaskActionButtons(bool isEnabled) {
+		this.completeButton.set_sensitive(isEnabled);
+		this.deleteButton.set_sensitive(isEnabled);
 	}
 	
 

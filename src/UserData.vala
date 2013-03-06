@@ -26,20 +26,26 @@ class UserData : Object {
 	
 	public static string tasksDirPath { get; private set; }
 
-	public static string todoFilePath { get; private set; }
+	public static string todoDirPath { get; set; }
+//	public static string todoFilePath { get; private set; }
 	
 	public static string homeDirPath { get; private set; }
 
-	public static int windowWidth { get; set; default = 530; }
-	public static int windowHeight { get; set; default = 400; }
+	public static int windowWidth { get; set; default = 460; }
+	public static int windowHeight { get; set; default = 480; }
 
+	private static UserSettingsManager settings;
+
+	/**
+	 * Initialize everything in UserData.
+	 */
 	public static void initializeUserData() {
 		
 		homeDirPath = Environment.get_home_dir();
 
 		defaultTasksDirName = "todo";
 
-		// settings = new UserSettingsManager();
+		settings = new UserSettingsManager();
 		// Load data from user's config file
 		
 
@@ -47,9 +53,19 @@ class UserData : Object {
 		//FileUtility.createFolder(tasksDirPath);
 	}
 
-	public static void setTodoFilePath(string path) {
+	/*public static void setTodoFilePath(string path) {
 		todoFilePath = path;
 		// Process new file...
+	}*/
+
+	public static void setTasksDir(string path) {
+		todoDirPath = path;
+		settings.setTasksDir(path);
+	}
+
+	public static string getTodoFilePath() {
+		Zystem.debug("Todo.txt path is: " + FileUtility.pathCombine(todoDirPath, "todo.txt"));
+		return FileUtility.pathCombine(todoDirPath, "todo.txt");
 	}
 
 	public static string getDefaultTasksDir() {
