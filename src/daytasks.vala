@@ -113,6 +113,7 @@ public class Main : Window {
 
 		// Create toolbar
 		var toolbar = new Toolbar();
+		toolbar.set_style(ToolbarStyle.TEXT);
 
 		var openButton = new ToolButton(null, "Open...");
 		openButton.clicked.connect(() => { this.openDirectory(); });
@@ -154,7 +155,12 @@ public class Main : Window {
 		toolbar.insert(newButton, -1);
 		toolbar.insert(this.completeButton, -1);
 		toolbar.insert(this.deleteButton, -1);
-		toolbar.insert(new Gtk.SeparatorToolItem(), -1);
+//		toolbar.insert(new Gtk.SeparatorToolItem(), -1);
+		var separator = new SeparatorToolItem();
+		toolbar.add(separator);
+		toolbar.child_set_property(separator, "expand", true);
+		separator.draw = false;
+		toolbar.insert(separator, -1);
 		toolbar.insert(aboutMenuButton, -1);
 		
 		this.txtTask = new TextView();
