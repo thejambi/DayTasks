@@ -23,6 +23,11 @@ public class Main : Window {
 
 	// SET THIS TO TRUE BEFORE BUILDING TARBALL
 	private const bool isInstalled = false;
+
+	private const string shortcutsText = 
+			"C or X: Mark selected task complete\n" + 
+			"Delete: Delete selected task\n" + 
+			"R: Reload todo.txt file";
 	
 	private int width;
 	private int height;
@@ -88,21 +93,21 @@ public class Main : Window {
 		settingsMenuItem.set_submenu(settingsMenu);
 		//menubar.append(settingsMenuItem);
 
-		// Set up Help menu
+		/*// Set up Help menu
 		var helpMenu = new Gtk.Menu();
 		var menuKeyboardShortcuts = new Gtk.MenuItem.with_label("Keyboard Shortcuts");
 		menuKeyboardShortcuts.activate.connect(() => {
 			//showKeyboardShortcuts();
 		});
-		var menuAbout = new Gtk.MenuItem.with_label("About P.S. Notes.");
+		var menuAbout = new Gtk.MenuItem.with_label("About DayTasks");
 		menuAbout.activate.connect(() => {
 			//this.menuAboutClicked();
 		});
 		helpMenu.append(menuKeyboardShortcuts);
-		helpMenu.append(menuAbout);
+		helpMenu.append(menuAbout);*/
 
-		var helpMenuItem = new Gtk.MenuItem.with_label("Help");
-		helpMenuItem.set_submenu(helpMenu);
+//		var helpMenuItem = new Gtk.MenuItem.with_label("Help");
+//		helpMenuItem.set_submenu(helpMenu);
 		//menubar.append(helpMenuItem);
 
 
@@ -121,10 +126,36 @@ public class Main : Window {
 		this.deleteButton = new ToolButton(null, "Delete");
 		deleteButton.clicked.connect(() => { this.deleteSelectedTask(); });
 
+//		var keyboardShortcutsButton = new ToolButton(null, "Keyboard Shortcuts");
+//		keyboardShortcutsButton.clicked.connect(() => { this.showKeyboardShortcuts(); });
+
+		var aboutMenuButton = new MenuToolButton(null, "About");
+
+		// Set up About menu
+		var aboutMenu = new Gtk.Menu();
+		var menuKeyboardShortcuts = new Gtk.MenuItem.with_label("Keyboard Shortcuts");
+		menuKeyboardShortcuts.activate.connect(() => {
+			this.showKeyboardShortcuts();
+		});
+		var menuAbout = new Gtk.MenuItem.with_label("About DayTasks");
+		menuAbout.activate.connect(() => {
+			this.showAboutDialog();
+		});
+		aboutMenu.append(menuKeyboardShortcuts);
+		aboutMenu.append(menuAbout);
+
+		aboutMenuButton.set_menu(aboutMenu);
+
+		aboutMenu.show_all();
+
+		aboutMenuButton.clicked.connect(() => { this.showAboutDialog(); });
+
 		toolbar.insert(openButton, -1);
 		toolbar.insert(newButton, -1);
 		toolbar.insert(this.completeButton, -1);
 		toolbar.insert(this.deleteButton, -1);
+		toolbar.insert(new Gtk.SeparatorToolItem(), -1);
+		toolbar.insert(aboutMenuButton, -1);
 		
 		this.txtTask = new TextView();
 		this.txtTask.focus_in_event.connect(() => {
@@ -190,6 +221,7 @@ public class Main : Window {
 		
 		this.destroy.connect(() => { this.on_destroy(); });
 
+		this.startNewTask();
 	}
 
 	private void setuptaskListView() {
@@ -390,6 +422,10 @@ public class Main : Window {
 		}
 
 		this.lastKeyName = keyName;
+
+		if (this.taskListView.has_focus) {
+			return true;
+		}
 		
 		// Return false or the entry does not get updated.
 		return false;
@@ -459,6 +495,25 @@ public class Main : Window {
 	private void enableTaskActionButtons(bool isEnabled) {
 		this.completeButton.set_sensitive(isEnabled);
 		this.deleteButton.set_sensitive(isEnabled);
+	}
+
+	private void showKeyboardShortcuts() {
+		var dialog = new Gtk.MessageDialog(null,Gtk.DialogFlags.MODAL,Gtk.MessageType.INFO, 
+						Gtk.ButtonsType.OK, this.shortcutsText);
+		dialog.set_title("Keyboard Shortcuts");
+		dialog.run();
+		dialog.destroy();
+	}
+
+	private void showAboutDialog() {
+		var about = new AboutDialog();
+		about.set_program_name("DayTasks");
+		about.comments = "A minimal todo app compatible with todo.txt.\nFor more about that, see www.todo.txt.";
+		about.website = "http://burnsoftware.wordpress.com/daytasks";
+		about.logo_icon_name = "daytasks";
+		about.set_copyright("by Zach Burnham");
+		about.run();
+		about.hide();
 	}
 	
 
