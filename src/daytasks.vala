@@ -40,6 +40,11 @@ public class Main : Window {
 	private Paned paned;
 	private ToolButton completeButton;
 	private ToolButton deleteButton;
+	private bool filterMode = false;
+
+	private Gdk.RGBA selectionColor;
+	private Gdk.RGBA filterBgColor;
+	private Gdk.RGBA taskBgColor;
 
 	public Main () {
 
@@ -170,17 +175,28 @@ public class Main : Window {
 			}
 			return false;
 		});
-		/*this.txtTask.focus_out_event.connect(() => {
-			if (!this.todoFile.hasActiveTask()) {
-				this.enableTaskActionButtons(true);
-			}
-			return false;
-		});*/
-		/*this.txtTask.buffer.changed.connect(() => {
-			//onTextChanged(this.txtTask.buffer);
-			Zystem.debug("The text has changed!");
-		});*/
 		this.editor = new TaskEditor(this.txtTask.buffer);
+
+
+		// Elementary hack time
+		this.selectionColor = this.txtTask.get_style_context().get_background_color(StateFlags.SELECTED);
+		this.taskBgColor = this.txtTask.get_style_context().get_background_color(StateFlags.NORMAL);
+		this.filterBgColor = this.get_style_context().get_background_color(StateFlags.NORMAL);
+
+		bool elementaryHackTime = false;
+		
+		if (this.taskBgColor.to_string() == this.filterBgColor.to_string()) {
+			elementaryHackTime = true;
+			this.taskBgColor = Gdk.RGBA();
+			this.taskBgColor.parse("#FFFFFF");
+			Zystem.debug("Hi. Your theme was wrong so I am just using white for you to write on.");
+		} else {
+			Zystem.debug(this.taskBgColor.to_string());
+			Zystem.debug(this.filterBgColor.to_string());
+		}
+
+		
+		
 
 		this.taskListView = new TreeView();
 		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
@@ -375,6 +391,10 @@ public class Main : Window {
 				case "y":
 					this.editor.redo();
 					break;
+				case "f":
+					this.toggleFilterMode();
+					Zystem.debug("Filter Mode is: " + this.filterMode.to_string());
+					break;
 				default:
 					Zystem.debug("What should Ctrl+" + keyName + " do?");
 					break;
@@ -482,6 +502,28 @@ public class Main : Window {
 		this.editor.startNewTask("");
 		this.txtTask.has_focus = true;
 	}
+
+	private void toggleFilterMode() {
+		this.filterMode = !this.filterMode;
+
+//		this.txtTask
+
+		if (this.filterMode) {
+			//this.changeEntryBgColor("#F2F1F0");
+			this.changeEntryBgColor(this.filterBgColor);
+		} else {
+			//this.changeEntryBgColor("#FFFFFF");
+			this.changeEntryBgColor(this.taskBgColor);
+		}
+
+		this.startNewTask();
+	}
+
+	private void changeEntryBgColor(Gdk.RGBA color) {
+		this.txtTask.override_background_color(Gtk.StateFlags.NORMAL, color);
+		this.txtTask.override_background_color(Gtk.StateFlags.SELECTED, this.selectionColor);
+	}
+	
 	
 
 	public void openDirectory() {
@@ -499,8 +541,10 @@ public class Main : Window {
 	}
 
 	private void enableTaskActionButtons(bool isEnabled) {
-		this.completeButton.set_sensitive(isEnabled);
-		this.deleteButton.set_sensitive(isEnabled);
+		if (!this.filterMode) {
+			this.completeButton.set_sensitive(isEnabled);
+			this.deleteButton.set_sensitive(isEnabled);
+		}
 	}
 
 	private void showKeyboardShortcuts() {
@@ -514,7 +558,7 @@ public class Main : Window {
 	private void showAboutDialog() {
 		var about = new AboutDialog();
 		about.set_program_name("DayTasks");
-		about.comments = "A minimal todo app compatible with todo.txt.\nFor more about that, see www.todo.txt.";
+		about.comments = "A minimal todo app compatible with todo.txt.\nFor more about that, see www.todotxt.com.";
 		about.website = "http://burnsoftware.wordpress.com/daytasks";
 		about.logo_icon_name = "daytasks";
 		about.set_copyright("by Zach Burnham");
