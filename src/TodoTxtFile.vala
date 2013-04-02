@@ -24,25 +24,28 @@ using Gtk;
  ***************************************/
 public class TodoTxtFile : GLib.Object {
 
-	private string filePath;
-	private File todoFile;
+//	private string filePath;
+	private string todoDirPath;
+	private string todoFilePath;
+//	private File todoFile;
+	private string archiveFilePath;
+//	private File archiveFile;
 	private int activeTaskIndex;
 	private List<Task> taskList;
 	private Gee.Set<string> projectList;
 	private Gee.Set<string> contextList;
-//	private bool isFiltered = false;
 	private List<Task> filteredTaskList;
 
 	public string filterText { get; private set; }
 	
 	
 	// Constructor
-	public TodoTxtFile(string path) {
+	public TodoTxtFile(string dirPath) {
 		this.filterText = "";
 		this.projectList = new Gee.TreeSet<string>();
 		this.contextList = new Gee.TreeSet<string>();
-		this.filePath = path;
-		this.todoFile = File.new_for_path(this.filePath);
+		this.todoDirPath = dirPath;
+		this.setupFiles();
 		this.loadTaskList();
 		this.unsetActiveTask();
 	}
@@ -63,7 +66,7 @@ public class TodoTxtFile : GLib.Object {
 		this.taskList = new List<Task>();
 		Task currentTask;
 
-		File file = File.new_for_path(this.filePath);
+		File file = File.new_for_path(this.todoFilePath);
 		try {
 			if (file.query_exists() == true) {
 				var dis = new DataInputStream (file.read ());
@@ -152,7 +155,9 @@ public class TodoTxtFile : GLib.Object {
 	public void deleteActiveTask() {
 		if (this.hasActiveTask()) {
 //			this.taskList.remove(this.taskList.nth_data(this.activeTaskIndex));
-			this.filteredTaskList.remove(this.filteredTaskList.nth_data(this.activeTaskIndex));
+			Task task = this.filteredTaskList.nth_data(this.activeTaskIndex);
+			this.taskList.remove(task);
+			
 			this.saveFile();
 		} else {
 			Zystem.debug("No active task to delete.");
@@ -207,10 +212,14 @@ public class TodoTxtFile : GLib.Object {
 
 		//Zystem.debug("ACTUALLY SAVING FILE");
 		try {
-			this.todoFile.replace_contents(fileText.data, null, false, FileCreateFlags.NONE, null, null);
+//			this.todoFile.replace_contents(fileText.data, null, false, FileCreateFlags.NONE, null, null);
+			File file = File.new_for_path(this.todoFilePath);
+			file.replace_contents(fileText.data, null, false, FileCreateFlags.NONE, null, null);
 		} catch (Error e) {
 			stderr.printf ("Error: %s\n", e.message);
 		}
+
+		this.reload();
 	}
 
 	private string generateTodoFileText() {
@@ -296,14 +305,29 @@ public class TodoTxtFile : GLib.Object {
 				this.filteredTaskList.append(task);
 			}
 		}
-
-		/*this.isFiltered = true;*/
 	}
 
 	public void loadTasksNotFiltered() {
-		/*this.isFiltered = false;*/
 		this.loadTasksFiltered("");
 	}
+
+
+
+
+
+	/**
+	 * Archiving of tasks
+	 */
+
+
+
+
+	private void setupFiles() {
+		this.todoFilePath = FileUtility.pathCombine(this.todoDirPath, "todo.txt");
+		this.archiveFilePath = FileUtility.pathCombine(todoDirPath, "done.txt");
+	}
+
+	
 
 }
 

@@ -24,7 +24,7 @@ class UserData : Object {
 	
 	public static string defaultTasksDirName { get; private set; }
 	
-	public static string tasksDirPath { get; private set; }
+//	public static string tasksDirPath { get; private set; }
 
 	public static string todoDirPath { get; set; }
 //	public static string todoFilePath { get; private set; }
@@ -63,10 +63,10 @@ class UserData : Object {
 		settings.setTasksDir(path);
 	}
 
-	public static string getTodoFilePath() {
+	/*public static string getTodoFilePath() {
 		Zystem.debug("Todo.txt path is: " + FileUtility.pathCombine(todoDirPath, "todo.txt"));
 		return FileUtility.pathCombine(todoDirPath, "todo.txt");
-	}
+	}*/
 
 	public static string getDefaultTasksDir() {
 		// If Dropbox/todo/ exists, use it. If not, well then just don't.

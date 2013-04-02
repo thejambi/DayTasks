@@ -22,7 +22,7 @@ using Gtk;
 public class Main : Window {
 
 	// SET THIS TO TRUE BEFORE BUILDING TARBALL
-	private const bool isInstalled = true;
+	private const bool isInstalled = false;
 
 	private const string shortcutsText = 
 			"C or X: Mark selected task complete\n" + 
@@ -514,13 +514,13 @@ public class Main : Window {
 
 	private void reloadTodoFile() {
 //		this.todoFile = new TodoTxtFile(UserData.getTodoFilePath());
-		this.todoFile.reload();
+//		this.todoFile.reload(); // todoFile does this automatically
 		this.setuptaskListView();
 		this.enableTaskActionButtons(false);
 	}
 
 	private void openTodoFile() {
-		this.todoFile = new TodoTxtFile(UserData.getTodoFilePath());
+		this.todoFile = new TodoTxtFile(UserData.todoDirPath);
 		this.setuptaskListView();
 		this.enableTaskActionButtons(false);
 	}
@@ -609,10 +609,10 @@ public class Main : Window {
 	}
 
 	private void enableTaskActionButtons(bool isEnabled) {
-		if (!this.listIsFiltered) {
+//		if (!this.listIsFiltered) {
 			this.completeButton.set_sensitive(isEnabled);
 			this.deleteButton.set_sensitive(isEnabled);
-		}
+//		}
 	}
 
 	private void showKeyboardShortcuts() {
