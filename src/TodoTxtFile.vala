@@ -30,19 +30,33 @@ public class TodoTxtFile : GLib.Object {
 	private List<Task> taskList;
 	private Gee.Set<string> projectList;
 	private Gee.Set<string> contextList;
+//	private bool isFiltered = false;
+	private List<Task> filteredTaskList;
+
+	public string filterText { get; private set; }
 	
 	
 	// Constructor
 	public TodoTxtFile(string path) {
+		this.filterText = "";
 		this.projectList = new Gee.TreeSet<string>();
 		this.contextList = new Gee.TreeSet<string>();
 		this.filePath = path;
 		this.todoFile = File.new_for_path(this.filePath);
 		this.loadTaskList();
-		this.sortByPriority();
 		this.unsetActiveTask();
 	}
 
+	public void reload() {
+		this.projectList = new Gee.TreeSet<string>();
+		this.contextList = new Gee.TreeSet<string>();
+		this.loadTaskList();
+		this.unsetActiveTask();
+	}
+
+	/**
+	 * Reload the entire task list from file.
+	 */
 	public void loadTaskList() {	
 		Zystem.debug("Loading the task list");
 
@@ -68,7 +82,11 @@ public class TodoTxtFile : GLib.Object {
 			stderr.printf ("Error: %s\n", e.message);
 		}
 
-//		this.debug();
+		// Sort list by priority
+		this.sortByPriority();
+
+		// Reload filtered list
+		this.loadTasksFiltered(this.filterText);
 	}
 
 	/**
@@ -110,12 +128,14 @@ public class TodoTxtFile : GLib.Object {
 
 	public string changeActiveTask(int index) {
 		this.activeTaskIndex = index;
-		return this.taskList.nth_data(index).fullText;
+//		return this.taskList.nth_data(index).fullText;
+		return this.filteredTaskList.nth_data(index).fullText;
 	}
 
 	public string getActiveTaskText() {
 		if (this.hasActiveTask()) {
-			return this.taskList.nth_data(this.activeTaskIndex).fullText;
+//			return this.taskList.nth_data(this.activeTaskIndex).fullText;
+			return this.filteredTaskList.nth_data(this.activeTaskIndex).fullText;
 		}
 
 		return "";
@@ -123,14 +143,16 @@ public class TodoTxtFile : GLib.Object {
 
 	public void updateActiveTaskText(string text) {
 		if (this.hasActiveTask()){
-			this.taskList.nth_data(this.activeTaskIndex).updateTaskText(text);
+//			this.taskList.nth_data(this.activeTaskIndex).updateTaskText(text);
+			this.filteredTaskList.nth_data(this.activeTaskIndex).updateTaskText(text);
 			this.saveFile();
 		}
 	}
 
 	public void deleteActiveTask() {
 		if (this.hasActiveTask()) {
-			this.taskList.remove(this.taskList.nth_data(this.activeTaskIndex));
+//			this.taskList.remove(this.taskList.nth_data(this.activeTaskIndex));
+			this.filteredTaskList.remove(this.filteredTaskList.nth_data(this.activeTaskIndex));
 			this.saveFile();
 		} else {
 			Zystem.debug("No active task to delete.");
@@ -165,12 +187,19 @@ public class TodoTxtFile : GLib.Object {
 
 	public void loadTasksToListStore(ListStore listmodel) {
 		TreeIter iter;
-		// Go through the list
-		foreach (Task task in this.taskList) {
+
+		foreach (Task task in this.filteredTaskList) {
 			listmodel.append(out iter);
 			listmodel.set(iter, 0, task.displayText);
 			//Zystem.debug("Added: " + task.displayText);
 		}
+		/*
+			foreach (Task task in this.taskList) {
+				listmodel.append(out iter);
+				listmodel.set(iter, 0, task.displayText);
+				//Zystem.debug("Added: " + task.displayText);
+			}
+		*/
 	}
 
 	private void saveFile() {
@@ -252,6 +281,28 @@ public class TodoTxtFile : GLib.Object {
 			this.contextList.add(context);
 			addContextsFromTask(task, task.fullText.index_of_char(' ', index));
 		}
+	}
+
+	public void loadTasksFiltered(string filterText) {
+
+		Zystem.debug("Filtering on: " + filterText);
+
+		this.filterText = filterText;
+
+		this.filteredTaskList = new List<Task>();
+
+		foreach (Task task in this.taskList) {
+			if (this.filterText.up() in task.fullText.up()) {
+				this.filteredTaskList.append(task);
+			}
+		}
+
+		/*this.isFiltered = true;*/
+	}
+
+	public void loadTasksNotFiltered() {
+		/*this.isFiltered = false;*/
+		this.loadTasksFiltered("");
 	}
 
 }

@@ -22,12 +22,13 @@ using Gtk;
 public class Main : Window {
 
 	// SET THIS TO TRUE BEFORE BUILDING TARBALL
-	private const bool isInstalled = false;
+	private const bool isInstalled = true;
 
 	private const string shortcutsText = 
 			"C or X: Mark selected task complete\n" + 
 			"Delete: Delete selected task\n" + 
-			"R: Reload todo.txt file";
+			"R: Reload todo.txt file\n" +
+			"Ctrl+F: Toggle the tasks filter";
 	
 	private int width;
 	private int height;
@@ -40,7 +41,9 @@ public class Main : Window {
 	private Paned paned;
 	private ToolButton completeButton;
 	private ToolButton deleteButton;
-	private bool filterMode = false;
+	private ToggleToolButton filterButton;
+	private bool listIsFiltered = false;
+	private bool inFilterView = false;
 
 	private Gdk.RGBA selectionColor;
 	private Gdk.RGBA filterBgColor;
@@ -132,6 +135,12 @@ public class Main : Window {
 		this.deleteButton = new ToolButton(null, "Delete");
 		deleteButton.clicked.connect(() => { this.deleteSelectedTask(); });
 
+		this.filterButton = new ToggleToolButton();
+		this.filterButton.label = "Filter";
+		this.filterButton.toggled.connect(() => {
+			this.toggleFilter();
+		});
+
 //		var keyboardShortcutsButton = new ToolButton(null, "Keyboard Shortcuts");
 //		keyboardShortcutsButton.clicked.connect(() => { this.showKeyboardShortcuts(); });
 
@@ -160,6 +169,7 @@ public class Main : Window {
 		toolbar.insert(newButton, -1);
 		toolbar.insert(this.completeButton, -1);
 		toolbar.insert(this.deleteButton, -1);
+		toolbar.insert(this.filterButton, -1);
 //		toolbar.insert(new Gtk.SeparatorToolItem(), -1);
 		var separator = new SeparatorToolItem();
 		toolbar.add(separator);
@@ -176,6 +186,10 @@ public class Main : Window {
 			return false;
 		});
 		this.editor = new TaskEditor(this.txtTask.buffer);
+
+		this.txtTask.buffer.changed.connect(() => {
+			this.filterTasks();
+		});
 
 
 		// Elementary hack time
@@ -202,7 +216,8 @@ public class Main : Window {
 		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
 
 		// Load todoFile and sets up taskListView with list of tasks
-		this.reloadTodoFile();
+//		this.reloadTodoFile();
+		this.openTodoFile();
 
 		this.editor = new TaskEditor(this.txtTask.buffer);
 		this.txtTask.pixels_above_lines = 2;
@@ -271,7 +286,7 @@ public class Main : Window {
 		listmodel.clear();
 		//listmodel.set_sort_column_id(0, SortType.ASCENDING);  // No sorting! The TodoTxtFile handles that
 
-		todoFile.loadTasksToListStore(listmodel);
+		this.todoFile.loadTasksToListStore(listmodel);
 
 		this.loadingTasks = false;
 	}
@@ -287,7 +302,9 @@ public class Main : Window {
 			return;
 		}
 
-		this.editor.clear();
+		if (this.inFilterView) {
+			this.exitFilterView();
+		}
 
 		this.todoFile.unsetActiveTask();
 		
@@ -392,8 +409,9 @@ public class Main : Window {
 					this.editor.redo();
 					break;
 				case "f":
-					this.toggleFilterMode();
-					Zystem.debug("Filter Mode is: " + this.filterMode.to_string());
+//					this.toggleFilter();
+					this.filterButton.active = true;
+					Zystem.debug("Filter Mode is: " + this.listIsFiltered.to_string());
 					break;
 				default:
 					Zystem.debug("What should Ctrl+" + keyName + " do?");
@@ -458,6 +476,10 @@ public class Main : Window {
 	}
 
 	private void saveActiveTask() {
+		if (this.inFilterView) {
+			return;
+		}
+		
 		if (this.editor.isEmpty()) {
 			Zystem.debug("I'm not going to update your empty task...");
 		} else {
@@ -491,6 +513,13 @@ public class Main : Window {
 	}
 
 	private void reloadTodoFile() {
+//		this.todoFile = new TodoTxtFile(UserData.getTodoFilePath());
+		this.todoFile.reload();
+		this.setuptaskListView();
+		this.enableTaskActionButtons(false);
+	}
+
+	private void openTodoFile() {
 		this.todoFile = new TodoTxtFile(UserData.getTodoFilePath());
 		this.setuptaskListView();
 		this.enableTaskActionButtons(false);
@@ -499,24 +528,63 @@ public class Main : Window {
 	private void startNewTask() {
 		this.todoFile.unsetActiveTask();
 		this.unselectTasks();
+		this.exitFilterView();
 		this.editor.startNewTask("");
 		this.txtTask.has_focus = true;
 	}
 
-	private void toggleFilterMode() {
-		this.filterMode = !this.filterMode;
+	private void toggleFilter() {
+		this.listIsFiltered = this.filterButton.active;
+
+		if (this.listIsFiltered) {
+			this.enterFilterView();
+		} else {
+			if (this.inFilterView) {
+				this.exitFilterView();
+			}
+
+			this.todoFile.loadTasksNotFiltered();
+			this.loadTasksList();
+		}
 
 //		this.txtTask
 
-		if (this.filterMode) {
-			//this.changeEntryBgColor("#F2F1F0");
+		/*if (this.filterMode) {
 			this.changeEntryBgColor(this.filterBgColor);
+			this.startNewTask();
 		} else {
-			//this.changeEntryBgColor("#FFFFFF");
 			this.changeEntryBgColor(this.taskBgColor);
-		}
+		}*/
+	}
 
-		this.startNewTask();
+	private void enterFilterView() {
+		this.inFilterView = true;
+		this.listIsFiltered = true;
+		
+		this.todoFile.unsetActiveTask();
+		this.unselectTasks();
+		this.editor.startNewTask("");
+		this.txtTask.has_focus = true;
+		
+		this.changeEntryBgColor(this.filterBgColor);
+//		this.startNewTask();
+		
+	}
+
+	private void exitFilterView() {
+		this.inFilterView = false;
+		this.editor.clear();
+		this.changeEntryBgColor(this.taskBgColor);
+	}
+
+	private void filterTasks() {
+		if (this.inFilterView) {
+			this.todoFile.loadTasksFiltered(this.editor.getText());
+			this.loadTasksList();
+		} /*else if (this.listIsFiltered && this.editor.isEmpty()) {
+			this.todoFile.loadTasksNotFiltered();
+			this.loadTasksList();
+		}*/
 	}
 
 	private void changeEntryBgColor(Gdk.RGBA color) {
@@ -541,7 +609,7 @@ public class Main : Window {
 	}
 
 	private void enableTaskActionButtons(bool isEnabled) {
-		if (!this.filterMode) {
+		if (!this.listIsFiltered) {
 			this.completeButton.set_sensitive(isEnabled);
 			this.deleteButton.set_sensitive(isEnabled);
 		}
