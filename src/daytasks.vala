@@ -224,7 +224,6 @@ public class Main : Window {
 		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
 
 		// Load todoFile and sets up taskListView with list of tasks
-//		this.reloadTodoFile();
 		this.openTodoFile();
 
 		this.editor = new TaskEditor(this.txtTask.buffer);
@@ -269,6 +268,9 @@ public class Main : Window {
 		this.startNewTask();
 	}
 
+	/**
+	 * Don't call this except from openTodoFile().
+	 */
 	private void setuptaskListView() {
 		var listmodel = new ListStore(1, typeof (string));
 		this.taskListView.model = listmodel;
@@ -277,6 +279,7 @@ public class Main : Window {
 //		this.taskListView.insert_column_with_attributes(-1, "Tasks", new CellRendererText (), "text", 0);
 
 		this.loadTasksList();
+		// And start new?
 
 		var treeSelection = this.taskListView.get_selection();
 		treeSelection.set_mode(SelectionMode.SINGLE);
@@ -298,7 +301,12 @@ public class Main : Window {
 
 		this.loadingTasks = false;
 
-		this.enableTaskActionButtons(false);
+//		this.enableTaskActionButtons(false);
+	}
+
+	private void loadListAndStartNew() {
+		this.loadTasksList();
+		this.startNewTask();
 	}
 
 	private void unselectTasks() {
@@ -312,15 +320,13 @@ public class Main : Window {
 			return;
 		}
 
-		if (this.inFilterView) {
-			this.exitFilterView();
-		}
+		
 
 		this.todoFile.unsetActiveTask();
 		
 		this.enableTaskActionButtons(true);
 
-		/*int index = -1;
+		int index = -1;
 		var selection = this.taskListView.get_selection() as TreeSelection;
 		selection.set_mode(SelectionMode.SINGLE);
 		TreeModel model;
@@ -334,7 +340,12 @@ public class Main : Window {
 
 		Zystem.debug("The selected index is: " + index.to_string());
 
-		Task task = this.todoFile.getTaskAtIndex(index);
+		if (this.inFilterView && index >= 0) {
+			Zystem.debug("In filter view, so I'm exiting it.");
+			this.exitFilterView();
+		}
+
+		/*Task task = this.todoFile.getTaskAtIndex(index);
 		Zystem.debug(task.fullText);
 
 		this.todoFile.changeActiveTask(index);*/
@@ -409,8 +420,7 @@ public class Main : Window {
 					}
 					break;
 				case "r":
-//					this.reloadTodoFile();
-					this.loadTasksList();
+					this.loadListAndStartNew();
 					return true;
 					break;
 				case "z":
@@ -421,7 +431,7 @@ public class Main : Window {
 					break;
 				case "f":
 //					this.toggleFilter();
-					this.filterButton.active = true;
+					this.filterButton.active = !this.filterButton.active;
 					Zystem.debug("Filter Mode is: " + this.listIsFiltered.to_string());
 					break;
 				case "p":
@@ -463,8 +473,7 @@ public class Main : Window {
 					break;
 				case "r":
 					if (!this.txtTask.has_focus) {
-//						this.reloadTodoFile();
-						this.loadTasksList();
+						this.loadListAndStartNew();
 						return true;
 					} else {
 						return false;
@@ -506,8 +515,7 @@ public class Main : Window {
 				this.todoFile.addNewTask(this.editor.getText());
 			}
 			this.editor.startNewTask("");
-//			this.reloadTodoFile();
-			this.loadTasksList();
+			this.loadListAndStartNew();
 		}
 	}
 
@@ -519,23 +527,19 @@ public class Main : Window {
 		this.setActiveTask();
 		this.todoFile.deleteActiveTask();
 //		this.todoFile.saveFile();
-//		this.reloadTodoFile();
-		this.loadTasksList();
+		this.loadListAndStartNew();
 	}
 
 	private void markSelectedTaskComplete() {
 		this.setActiveTask();
 		this.todoFile.completeActiveTask();
-//		this.reloadTodoFile();
-		this.loadTasksList();
+		this.loadListAndStartNew();
 	}
 
-	private void reloadTodoFile() {
-//		this.todoFile = new TodoTxtFile(UserData.getTodoFilePath());
-//		this.todoFile.reload(); // todoFile does this automatically
+	/*private void reloadTodoFile() {
 		this.setuptaskListView();
 		this.enableTaskActionButtons(false);
-	}
+	}*/
 
 	private void openTodoFile() {
 		this.todoFile = new TodoTxtFile(UserData.todoDirPath);
@@ -553,8 +557,7 @@ public class Main : Window {
 
 	private void archiveCompletedTasks() {
 		this.todoFile.archiveCompletedTasks();
-//		this.reloadTodoFile();
-		this.loadTasksList();
+		this.loadListAndStartNew();
 	}
 
 	private void toggleFilter() {
@@ -627,7 +630,8 @@ public class Main : Window {
 			string path = fileChooser.get_filename();
 			UserData.setTasksDir(path);
 			
-			this.reloadTodoFile();
+//			this.reloadTodoFile();
+			this.openTodoFile();
 		}
 		fileChooser.destroy();
 	}
