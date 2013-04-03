@@ -420,7 +420,8 @@ public class Main : Window {
 					}
 					break;
 				case "r":
-					this.loadListAndStartNew();
+//					this.loadListAndStartNew();
+					this.manualReloadTodoFile();
 					return true;
 					break;
 				case "z":
@@ -473,7 +474,7 @@ public class Main : Window {
 					break;
 				case "r":
 					if (!this.txtTask.has_focus) {
-						this.loadListAndStartNew();
+						this.manualReloadTodoFile();
 						return true;
 					} else {
 						return false;
@@ -536,10 +537,11 @@ public class Main : Window {
 		this.loadListAndStartNew();
 	}
 
-	/*private void reloadTodoFile() {
+	private void manualReloadTodoFile() {
+		this.todoFile.reload();
 		this.setuptaskListView();
 		this.enableTaskActionButtons(false);
-	}*/
+	}
 
 	private void openTodoFile() {
 		this.todoFile = new TodoTxtFile(UserData.todoDirPath);
