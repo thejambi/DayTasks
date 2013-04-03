@@ -327,6 +327,45 @@ public class TodoTxtFile : GLib.Object {
 		this.archiveFilePath = FileUtility.pathCombine(todoDirPath, "done.txt");
 	}
 
+
+
+
+	public void archiveCompletedTasks() {
+		// Get the path and File object
+		string path = this.archiveFilePath;
+		Zystem.debug("Hello. The archive filename is: " + this.archiveFilePath);
+		File file = File.new_for_path(path);
+		FileOutputStream fileStream = file.append_to(FileCreateFlags.NONE);
+
+		var deleteList = new List<Task>();
+
+		foreach (Task task in this.taskList) {
+			if (task.isComplete) {
+				this.writeDoneTask(fileStream, task);
+				/*this.taskList.remove(task);*/
+				deleteList.append(task);
+			}
+		}
+
+		foreach (Task task in deleteList) {
+			this.taskList.remove(task);
+		}
+
+		this.saveFile();
+	}
+
+
+
+	private void writeDoneTask(FileOutputStream fileStream, Task task) {
+		string text = task.fullText + "\n";
+		uint8[] data = text.data;
+        long written = 0;
+        while (written < data.length) { 
+			// sum of the bytes of 'text' that already have been written to the stream
+			written += fileStream.write (data[written:data.length]);
+		}
+	}
+
 	
 
 }

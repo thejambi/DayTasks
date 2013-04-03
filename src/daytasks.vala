@@ -28,7 +28,7 @@ public class Main : Window {
 			"C or X: Mark selected task complete\n" + 
 			"Delete: Delete selected task\n" + 
 			"R: Reload todo.txt file\n" +
-			"Ctrl+F: Toggle the tasks filter";
+			"Ctrl+F: Toggle the filter";
 	
 	private int width;
 	private int height;
@@ -41,6 +41,7 @@ public class Main : Window {
 	private Paned paned;
 	private ToolButton completeButton;
 	private ToolButton deleteButton;
+	private ToolButton archiveButton;
 	private ToggleToolButton filterButton;
 	private bool listIsFiltered = false;
 	private bool inFilterView = false;
@@ -56,8 +57,6 @@ public class Main : Window {
 		UserData.initializeUserData();
 
 		this.lastKeyName = "";
-
-//		this.loadTodoFile();
 
 		this.title = "DayTasks";
 		this.window_position = WindowPosition.CENTER;
@@ -123,17 +122,25 @@ public class Main : Window {
 		var toolbar = new Toolbar();
 		toolbar.set_style(ToolbarStyle.TEXT);
 
-		var openButton = new ToolButton(null, "Open...");
+//		var openButton = new ToolButton.from_stock(Stock.OPEN);
+		var openButton = new ToolButton(null, "Open…");
 		openButton.clicked.connect(() => { this.openDirectory(); });
 
-		var newButton = new ToolButton(null, "New Task");
+//		var newButton = new ToolButton.from_stock(Stock.ADD);
+		var newButton = new ToolButton(null, "New");
 		newButton.clicked.connect(() => { this.startNewTask(); });
 		
-		this.completeButton = new ToolButton(null, "Complete");
+//		this.completeButton = new ToolButton.from_stock(Stock.APPLY);
+		this.completeButton = new ToolButton(null, "✓");
 		completeButton.clicked.connect(() => { this.markSelectedTaskComplete(); });
 		
-		this.deleteButton = new ToolButton(null, "Delete");
+//		this.deleteButton = new ToolButton.from_stock(Stock.DELETE);
+		this.deleteButton = new ToolButton(null, "  ⃠");
 		deleteButton.clicked.connect(() => { this.deleteSelectedTask(); });
+
+//		this.archiveButton = new ToolButton.from_stock(Stock.JUMP_TO);
+		this.archiveButton = new ToolButton(null, "Archive");
+		this.archiveButton.clicked.connect(() => { this.archiveCompletedTasks(); });
 
 		this.filterButton = new ToggleToolButton();
 		this.filterButton.label = "Filter";
@@ -169,6 +176,7 @@ public class Main : Window {
 		toolbar.insert(newButton, -1);
 		toolbar.insert(this.completeButton, -1);
 		toolbar.insert(this.deleteButton, -1);
+		toolbar.insert(this.archiveButton, -1);
 		toolbar.insert(this.filterButton, -1);
 //		toolbar.insert(new Gtk.SeparatorToolItem(), -1);
 		var separator = new SeparatorToolItem();
@@ -289,6 +297,8 @@ public class Main : Window {
 		this.todoFile.loadTasksToListStore(listmodel);
 
 		this.loadingTasks = false;
+
+		this.enableTaskActionButtons(false);
 	}
 
 	private void unselectTasks() {
@@ -399,7 +409,8 @@ public class Main : Window {
 					}
 					break;
 				case "r":
-					this.reloadTodoFile();
+//					this.reloadTodoFile();
+					this.loadTasksList();
 					return true;
 					break;
 				case "z":
@@ -412,6 +423,9 @@ public class Main : Window {
 //					this.toggleFilter();
 					this.filterButton.active = true;
 					Zystem.debug("Filter Mode is: " + this.listIsFiltered.to_string());
+					break;
+				case "p":
+					this.archiveCompletedTasks();
 					break;
 				default:
 					Zystem.debug("What should Ctrl+" + keyName + " do?");
@@ -449,7 +463,8 @@ public class Main : Window {
 					break;
 				case "r":
 					if (!this.txtTask.has_focus) {
-						this.reloadTodoFile();
+//						this.reloadTodoFile();
+						this.loadTasksList();
 						return true;
 					} else {
 						return false;
@@ -491,7 +506,8 @@ public class Main : Window {
 				this.todoFile.addNewTask(this.editor.getText());
 			}
 			this.editor.startNewTask("");
-			this.reloadTodoFile();
+//			this.reloadTodoFile();
+			this.loadTasksList();
 		}
 	}
 
@@ -503,13 +519,15 @@ public class Main : Window {
 		this.setActiveTask();
 		this.todoFile.deleteActiveTask();
 //		this.todoFile.saveFile();
-		this.reloadTodoFile();
+//		this.reloadTodoFile();
+		this.loadTasksList();
 	}
 
 	private void markSelectedTaskComplete() {
 		this.setActiveTask();
 		this.todoFile.completeActiveTask();
-		this.reloadTodoFile();
+//		this.reloadTodoFile();
+		this.loadTasksList();
 	}
 
 	private void reloadTodoFile() {
@@ -531,6 +549,12 @@ public class Main : Window {
 		this.exitFilterView();
 		this.editor.startNewTask("");
 		this.txtTask.has_focus = true;
+	}
+
+	private void archiveCompletedTasks() {
+		this.todoFile.archiveCompletedTasks();
+//		this.reloadTodoFile();
+		this.loadTasksList();
 	}
 
 	private void toggleFilter() {
