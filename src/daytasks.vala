@@ -566,9 +566,9 @@ public class Main : Window {
 		if (this.listIsFiltered) {
 			this.enterFilterView();
 		} else {
-			if (this.inFilterView) {
+//			if (this.inFilterView) {
 				this.exitFilterView();
-			}
+//			}
 
 			this.todoFile.loadTasksNotFiltered();
 			this.loadTasksList();
@@ -600,7 +600,9 @@ public class Main : Window {
 
 	private void exitFilterView() {
 		this.inFilterView = false;
-		this.editor.clear();
+		this.todoFile.unsetActiveTask();
+		this.editor.startNewTask("");
+		this.txtTask.has_focus = true;
 		this.changeEntryBgColor(this.taskBgColor);
 	}
 
