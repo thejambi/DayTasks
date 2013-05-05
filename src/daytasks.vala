@@ -22,7 +22,7 @@ using Gtk;
 public class Main : Window {
 
 	// SET THIS TO TRUE BEFORE BUILDING TARBALL
-	private const bool isInstalled = false;
+	private const bool isInstalled = true;
 
 	private const string shortcutsText = 
 			"C or X: Mark selected task complete\n" + 
@@ -121,6 +121,8 @@ public class Main : Window {
 		// Create toolbar
 		var toolbar = new Toolbar();
 		toolbar.set_style(ToolbarStyle.TEXT);
+		var context = toolbar.get_style_context();
+		context.add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR);
 
 //		var openButton = new ToolButton.from_stock(Stock.OPEN);
 		var openButton = new ToolButton(null, "Open…");
