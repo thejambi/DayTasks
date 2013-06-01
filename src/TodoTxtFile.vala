@@ -165,11 +165,13 @@ public class TodoTxtFile : GLib.Object {
 	}
 
 	public void completeActiveTask() {
-		this.updateActiveTaskText("x " + this.getActiveTaskText());
+		this.updateActiveTaskText("x " + UserData.getYYYYMMDD() + " " + this.getActiveTaskText());
 	}
 
 	public void addNewTask(string text) {
-		this.taskList.append(new Task(text));
+		Task task = new Task(text);
+		task.setCreatedToday();
+		this.taskList.append(task);
 		this.saveFile();
 	}
 

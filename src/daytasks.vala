@@ -73,7 +73,7 @@ public class Main : Window {
 		var menubar = new MenuBar();
 
 		var tasksMenu = new Gtk.Menu();
-		var menuOpenFile = new Gtk.MenuItem.with_label("Open todo.txt file");
+		var menuOpenFile = new Gtk.MenuItem.with_label("Open todo folder...");
 		menuOpenFile.activate.connect(() => {
 			this.openDirectory();
 		});
@@ -125,8 +125,8 @@ public class Main : Window {
 		context.add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR);
 
 //		var openButton = new ToolButton.from_stock(Stock.OPEN);
-		var openButton = new ToolButton(null, "Open…");
-		openButton.clicked.connect(() => { this.openDirectory(); });
+		//var openButton = new ToolButton(null, "Open…");
+		//openButton.clicked.connect(() => { this.openDirectory(); });
 
 //		var newButton = new ToolButton.from_stock(Stock.ADD);
 		var newButton = new ToolButton(null, "New");
@@ -157,6 +157,8 @@ public class Main : Window {
 
 		// Set up About menu
 		var aboutMenu = new Gtk.Menu();
+		var menuOpenFolder = new Gtk.MenuItem.with_label("Open tasks folder...");
+		menuOpenFolder.activate.connect(() => { this.openDirectory(); });
 		var menuKeyboardShortcuts = new Gtk.MenuItem.with_label("Keyboard Shortcuts");
 		menuKeyboardShortcuts.activate.connect(() => {
 			this.showKeyboardShortcuts();
@@ -165,6 +167,7 @@ public class Main : Window {
 		menuAbout.activate.connect(() => {
 			this.showAboutDialog();
 		});
+		aboutMenu.append(menuOpenFolder);
 		aboutMenu.append(menuKeyboardShortcuts);
 		aboutMenu.append(menuAbout);
 
@@ -174,7 +177,7 @@ public class Main : Window {
 
 		aboutMenuButton.clicked.connect(() => { this.showAboutDialog(); });
 
-		toolbar.insert(openButton, -1);
+		//toolbar.insert(openButton, -1);
 		toolbar.insert(newButton, -1);
 		toolbar.insert(this.completeButton, -1);
 		toolbar.insert(this.deleteButton, -1);

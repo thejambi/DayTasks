@@ -99,6 +99,11 @@ class UserData : Object {
 	}
 	*/
 
+
+	public static string getYYYYMMDD() {
+		DateTime dateTime = new GLib.DateTime.now_local();
+		return dateTime.format("%Y-%m-%d");
+	}
 	
 	
 }
