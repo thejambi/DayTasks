@@ -42,6 +42,12 @@ public class Task : GLib.Object, Comparable<Task> {
 		this.setDisplayText();
 	}
 
+	/*
+	public Task.CreatedToday(string text) {
+		this.fullText = text;
+		this.setCreatedToday();
+	}*/
+
 	public void loadPriority() {
 		if (GLib.Regex.match_simple("[(][A-Z][)]", this.fullText.substring(0, 3))) {
 			//Zystem.debug("IT'S GOT PRIORITY!  " + this.fullText.get_char(1).to_string());
@@ -82,16 +88,41 @@ public class Task : GLib.Object, Comparable<Task> {
 		}
 	}
 
+	/*
+	 * TODO
+	 */
 	private void loadCompletionDate() {
 		if (!this.isComplete) {
 			return; // Just in case!
 		}
-
-		
 	}
 
-	public void loadDate() {
-		// Store the creation date if it exists
+	/**
+	 * This adds a creation date of today to the task. It's done separately from the constructor for good reason!
+	 */
+	public void setCreatedToday() {
+		if (this.hasCreationDate) {
+			// Even though this should never happen.
+			return;
+		}
+
+		string newFullText;
+		if (this.hasPriority()) {
+			//
+			newFullText = this.fullText.substring(0, 3) + " " + UserData.getYYYYMMDD() + " " + this.fullText.substring(4);
+			Zystem.debug("!!!!!!!!!!!!!!!!!! " + newFullText);
+			
+		} else {
+			newFullText = UserData.getYYYYMMDD() + " " + this.fullText;
+			Zystem.debug("!!!!!!!!!!!!!!!!!! " + newFullText);
+		}
+
+		this.fullText = newFullText;
+
+		//this.loadPriority();
+		//this.loadCompleted();
+		this.loadCreationDate();
+		this.setDisplayText();
 	}
 
 	public void setDisplayText() {
@@ -104,7 +135,7 @@ public class Task : GLib.Object, Comparable<Task> {
 			this.displayText = this.displayText.splice(3, 14);
 			//Zystem.debug("I JUST SPLICED IT? " + this.displayText);
 		} else if (this.hasCreationDate && !this.hasPriority()) {
-			this.displayText = this.displayText.splice(0, 10);
+			this.displayText = this.displayText.splice(0, 11);
 			//Zystem.debug("I JUST SPLICED IT? " + this.displayText);
 		}
 	}
@@ -116,6 +147,45 @@ public class Task : GLib.Object, Comparable<Task> {
 
 	public bool hasPriority() {
 		return this.priority != ' ';
+	}
+
+	public void setPriority(char p) {
+		if (this.isComplete) {
+			return; // Doing this for complete tasks is just silly.
+		}
+		
+		// if has priority vs doesn't have priority? Handle both
+		string newFullText;
+		if (this.hasPriority()) {
+			//
+			//newFullText = this.fullText.substring(0, 3) + " " + UserData.getYYYYMMDD() + " " + this.fullText.substring(4);
+			newFullText = "(" + p.to_string() + ")" + this.fullText.substring(3);
+			Zystem.debug("!!!!!!!!!!!!!!!!!! " + newFullText);
+			
+		} else {
+			newFullText = "(" + p.to_string() + ") " + this.fullText;
+			Zystem.debug("!!!!!!!!!!!!!!!!!! " + newFullText);
+		}
+
+		this.fullText = newFullText;
+
+		this.loadPriority();
+		//this.loadCompleted();
+		//this.loadCreationDate();
+		this.setDisplayText();
+	}
+
+	public void clearPriority() {
+		if (this.isComplete || !this.hasPriority()) {
+			return; // Doing this for complete tasks or non-priority tasks is just silly.
+		}
+
+		this.fullText = this.fullText.substring(3);
+
+		this.loadPriority();
+		//this.loadCompleted();
+		//this.loadCreationDate();
+		this.setDisplayText();
 	}
 
 

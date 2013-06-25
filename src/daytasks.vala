@@ -22,11 +22,14 @@ using Gtk;
 public class Main : Window {
 
 	// SET THIS TO TRUE BEFORE BUILDING TARBALL
-	private const bool isInstalled = true;
+	private const bool isInstalled = false;
 
 	private const string shortcutsText = 
+			"Enter: Save/update task being edited\n" + 
 			"C or X: Mark selected task complete\n" + 
-			"Delete: Delete selected task\n" + 
+			"Delete: Delete selected task\n" +
+			"Ctrl+[1-9]: Prioritize selected task\n" +
+			"Ctrl+0: Clear priority on selected task\n" + 
 			"R: Reload todo.txt file\n" +
 			"Ctrl+F: Toggle the filter";
 	
@@ -41,6 +44,7 @@ public class Main : Window {
 	private Paned paned;
 	private ToolButton completeButton;
 	private ToolButton deleteButton;
+	private MenuToolButton priorityButton;
 	private ToolButton archiveButton;
 	private ToggleToolButton filterButton;
 	private bool listIsFiltered = false;
@@ -73,7 +77,7 @@ public class Main : Window {
 		var menubar = new MenuBar();
 
 		var tasksMenu = new Gtk.Menu();
-		var menuOpenFile = new Gtk.MenuItem.with_label("Open todo.txt file");
+		var menuOpenFile = new Gtk.MenuItem.with_label("Open todo folder...");
 		menuOpenFile.activate.connect(() => {
 			this.openDirectory();
 		});
@@ -125,8 +129,8 @@ public class Main : Window {
 		context.add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR);
 
 //		var openButton = new ToolButton.from_stock(Stock.OPEN);
-		var openButton = new ToolButton(null, "Open…");
-		openButton.clicked.connect(() => { this.openDirectory(); });
+		//var openButton = new ToolButton(null, "Open…");
+		//openButton.clicked.connect(() => { this.openDirectory(); });
 
 //		var newButton = new ToolButton.from_stock(Stock.ADD);
 		var newButton = new ToolButton(null, "New");
@@ -139,6 +143,25 @@ public class Main : Window {
 //		this.deleteButton = new ToolButton.from_stock(Stock.DELETE);
 		this.deleteButton = new ToolButton(null, "  ⃠");
 		deleteButton.clicked.connect(() => { this.deleteSelectedTask(); });
+
+		this.priorityButton = new MenuToolButton(null, "(A)");
+		this.priorityButton.clicked.connect(() => { this.prioritizeSelectedTask('A'); });
+		var priorityMenu = new Gtk.Menu();
+
+		string priorities = "BCDEFG";
+		foreach (char c in priorities.to_utf8()) {
+			var menuP = new Gtk.MenuItem.with_label("(" + c.to_string() + ")");
+			menuP.activate.connect(() => { this.prioritizeSelectedTask(c); });
+			priorityMenu.append(menuP);
+		}
+		
+		var menuClearP = new Gtk.MenuItem.with_label("Clear Priority");
+		menuClearP.activate.connect(() => { this.clearSelectedTaskPriority(); });
+		priorityMenu.append(menuClearP);
+
+		priorityMenu.show_all();
+
+		this.priorityButton.set_menu(priorityMenu);
 
 //		this.archiveButton = new ToolButton.from_stock(Stock.JUMP_TO);
 		this.archiveButton = new ToolButton(null, "Archive");
@@ -157,6 +180,8 @@ public class Main : Window {
 
 		// Set up About menu
 		var aboutMenu = new Gtk.Menu();
+		var menuOpenFolder = new Gtk.MenuItem.with_label("Open tasks folder...");
+		menuOpenFolder.activate.connect(() => { this.openDirectory(); });
 		var menuKeyboardShortcuts = new Gtk.MenuItem.with_label("Keyboard Shortcuts");
 		menuKeyboardShortcuts.activate.connect(() => {
 			this.showKeyboardShortcuts();
@@ -165,6 +190,7 @@ public class Main : Window {
 		menuAbout.activate.connect(() => {
 			this.showAboutDialog();
 		});
+		aboutMenu.append(menuOpenFolder);
 		aboutMenu.append(menuKeyboardShortcuts);
 		aboutMenu.append(menuAbout);
 
@@ -174,10 +200,11 @@ public class Main : Window {
 
 		aboutMenuButton.clicked.connect(() => { this.showAboutDialog(); });
 
-		toolbar.insert(openButton, -1);
+		//toolbar.insert(openButton, -1);
 		toolbar.insert(newButton, -1);
 		toolbar.insert(this.completeButton, -1);
 		toolbar.insert(this.deleteButton, -1);
+		toolbar.insert(this.priorityButton, -1);
 		toolbar.insert(this.archiveButton, -1);
 		toolbar.insert(this.filterButton, -1);
 //		toolbar.insert(new Gtk.SeparatorToolItem(), -1);
@@ -440,6 +467,36 @@ public class Main : Window {
 				case "p":
 					this.archiveCompletedTasks();
 					break;
+				case "1":
+					this.prioritizeSelectedTask('A');
+					break;
+				case "2":
+					this.prioritizeSelectedTask('B');
+					break;
+				case "3":
+					this.prioritizeSelectedTask('C');
+					break;
+				case "4":
+					this.prioritizeSelectedTask('D');
+					break;
+				case "5":
+					this.prioritizeSelectedTask('E');
+					break;
+				case "6":
+					this.prioritizeSelectedTask('F');
+					break;
+				case "7":
+					this.prioritizeSelectedTask('G');
+					break;
+				case "8":
+					this.prioritizeSelectedTask('H');
+					break;
+				case "9":
+					this.prioritizeSelectedTask('I');
+					break;
+				case "0":
+					this.clearSelectedTaskPriority();
+					break;
 				default:
 					Zystem.debug("What should Ctrl+" + keyName + " do?");
 					break;
@@ -536,6 +593,18 @@ public class Main : Window {
 	private void markSelectedTaskComplete() {
 		this.setActiveTask();
 		this.todoFile.completeActiveTask();
+		this.loadListAndStartNew();
+	}
+
+	private void prioritizeSelectedTask(char priority) {
+		this.setActiveTask();
+		this.todoFile.prioritizeActiveTask(priority);
+		this.loadListAndStartNew();
+	}
+
+	private void clearSelectedTaskPriority() {
+		this.setActiveTask();
+		this.todoFile.clearActiveTaskPriority();
 		this.loadListAndStartNew();
 	}
 
@@ -646,6 +715,7 @@ public class Main : Window {
 //		if (!this.listIsFiltered) {
 			this.completeButton.set_sensitive(isEnabled);
 			this.deleteButton.set_sensitive(isEnabled);
+			this.priorityButton.set_sensitive(isEnabled);
 //		}
 	}
 

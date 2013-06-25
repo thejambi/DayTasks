@@ -145,7 +145,7 @@ public class TodoTxtFile : GLib.Object {
 	}
 
 	public void updateActiveTaskText(string text) {
-		if (this.hasActiveTask()){
+		if (this.hasActiveTask()) {
 //			this.taskList.nth_data(this.activeTaskIndex).updateTaskText(text);
 			this.filteredTaskList.nth_data(this.activeTaskIndex).updateTaskText(text);
 			this.saveFile();
@@ -165,11 +165,35 @@ public class TodoTxtFile : GLib.Object {
 	}
 
 	public void completeActiveTask() {
-		this.updateActiveTaskText("x " + this.getActiveTaskText());
+		this.updateActiveTaskText("x " + UserData.getYYYYMMDD() + " " + this.getActiveTaskText());
+	}
+
+	public void prioritizeActiveTask(char priority) {
+		if (this.hasActiveTask()) {
+			Task task = this.filteredTaskList.nth_data(this.activeTaskIndex);
+			task.setPriority(priority);
+			
+			this.saveFile();
+		} else {
+			Zystem.debug("No active task to prioritize.");
+		}
+	}
+
+	public void clearActiveTaskPriority() {
+		if (this.hasActiveTask()) {
+			Task task = this.filteredTaskList.nth_data(this.activeTaskIndex);
+			task.clearPriority();
+
+			this.saveFile();
+		} else {
+			Zystem.debug("No active task to clear priority.");
+		}
 	}
 
 	public void addNewTask(string text) {
-		this.taskList.append(new Task(text));
+		Task task = new Task(text);
+		task.setCreatedToday();
+		this.taskList.append(task);
 		this.saveFile();
 	}
 
