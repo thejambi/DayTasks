@@ -131,13 +131,11 @@ public class TodoTxtFile : GLib.Object {
 
 	public string changeActiveTask(int index) {
 		this.activeTaskIndex = index;
-//		return this.taskList.nth_data(index).fullText;
 		return this.filteredTaskList.nth_data(index).fullText;
 	}
 
 	public string getActiveTaskText() {
 		if (this.hasActiveTask()) {
-//			return this.taskList.nth_data(this.activeTaskIndex).fullText;
 			return this.filteredTaskList.nth_data(this.activeTaskIndex).fullText;
 		}
 
@@ -146,7 +144,6 @@ public class TodoTxtFile : GLib.Object {
 
 	public void updateActiveTaskText(string text) {
 		if (this.hasActiveTask()) {
-//			this.taskList.nth_data(this.activeTaskIndex).updateTaskText(text);
 			this.filteredTaskList.nth_data(this.activeTaskIndex).updateTaskText(text);
 			this.saveFile();
 		}
@@ -154,7 +151,6 @@ public class TodoTxtFile : GLib.Object {
 
 	public void deleteActiveTask() {
 		if (this.hasActiveTask()) {
-//			this.taskList.remove(this.taskList.nth_data(this.activeTaskIndex));
 			Task task = this.filteredTaskList.nth_data(this.activeTaskIndex);
 			this.taskList.remove(task);
 			
