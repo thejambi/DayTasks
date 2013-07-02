@@ -161,7 +161,15 @@ public class TodoTxtFile : GLib.Object {
 	}
 
 	public void completeActiveTask() {
-		this.updateActiveTaskText("x " + UserData.getYYYYMMDD() + " " + this.getActiveTaskText());
+		//this.updateActiveTaskText("x " + UserData.getYYYYMMDD() + " " + this.getActiveTaskText());
+		if (this.hasActiveTask()) {
+			Task task = this.filteredTaskList.nth_data(this.activeTaskIndex);
+			task.markComplete();
+			
+			this.saveFile();
+		} else {
+			Zystem.debug("No active task to mark complete.");
+		}
 	}
 
 	public void prioritizeActiveTask(char priority) {

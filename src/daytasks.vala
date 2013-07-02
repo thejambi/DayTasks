@@ -37,7 +37,8 @@ public class Main : Window {
 	private int height;
 	private string lastKeyName;
 	private bool loadingTasks = false;
-	private TextView txtTask;
+//	private TextView txtTask;
+	private HyperTextView txtTask;
 	private TreeView taskListView;
 	private TodoTxtFile todoFile;
 	private TaskEditor editor;
@@ -215,7 +216,7 @@ public class Main : Window {
 		toolbar.insert(separator, -1);
 		toolbar.insert(aboutMenuButton, -1);
 		
-		this.txtTask = new TextView();
+		this.txtTask = new HyperTextView();	 // Used to be TextView
 		this.txtTask.focus_in_event.connect(() => {
 			if (!this.todoFile.hasActiveTask()) {
 				this.enableTaskActionButtons(false);

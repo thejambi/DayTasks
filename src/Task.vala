@@ -180,12 +180,21 @@ public class Task : GLib.Object, Comparable<Task> {
 			return; // Doing this for complete tasks or non-priority tasks is just silly.
 		}
 
-		this.fullText = this.fullText.substring(3);
+		this.fullText = this.fullText.substring(4);
 
 		this.loadPriority();
 		//this.loadCompleted();
 		//this.loadCreationDate();
 		this.setDisplayText();
+	}
+
+	public void markComplete() {
+		if (this.isComplete) {
+			return; // Task already complete, do nothing.
+		}
+		
+		this.clearPriority();
+		this.fullText = "x " + UserData.getYYYYMMDD() + " " + this.fullText;
 	}
 
 
