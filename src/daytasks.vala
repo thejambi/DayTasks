@@ -282,7 +282,7 @@ public class Main : Window {
 		var vbox1 = new Box (Orientation.VERTICAL, 0);
 //		vbox1.pack_start(menubar, false, true, 0);
 		vbox1.pack_start(toolbar, false, true, 0);
-		vbox1.pack_start (paned, true, true, 2);
+		vbox1.pack_start (paned, true, true, 0);
 
 		add(vbox1);
 
