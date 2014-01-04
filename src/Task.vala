@@ -175,6 +175,12 @@ public class Task : GLib.Object, Comparable<Task> {
 		this.setDisplayText();
 	}
 
+	public static string changePriorityOnTaskText(string taskText, char p) {
+		Task t = new Task(taskText);
+		t.setPriority(p);
+		return t.fullText;
+	}
+
 	public void clearPriority() {
 		if (this.isComplete || !this.hasPriority()) {
 			return; // Doing this for complete tasks or non-priority tasks is just silly.
@@ -186,6 +192,12 @@ public class Task : GLib.Object, Comparable<Task> {
 		//this.loadCompleted();
 		//this.loadCreationDate();
 		this.setDisplayText();
+	}
+
+	public static string clearPriorityOnTaskText(string taskText) {
+		Task t = new Task(taskText);
+		t.clearPriority();
+		return t.fullText;
 	}
 
 	public void markComplete() {
@@ -215,6 +227,11 @@ public class Task : GLib.Object, Comparable<Task> {
 		}
 
 		return -1;
+	}
+
+	
+	public static string getPriorityTag(char p) {
+		return "(" + p.to_string() + ") ";
 	}
 
 }

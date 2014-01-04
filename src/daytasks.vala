@@ -177,7 +177,7 @@ public class Main : Window {
 //		var keyboardShortcutsButton = new ToolButton(null, "Keyboard Shortcuts");
 //		keyboardShortcutsButton.clicked.connect(() => { this.showKeyboardShortcuts(); });
 
-		var aboutMenuButton = new MenuToolButton(null, "About");
+		var aboutMenuButton = new MenuToolButton(null, "?");
 
 		// Set up About menu
 		var aboutMenu = new Gtk.Menu();
@@ -220,6 +220,7 @@ public class Main : Window {
 		this.txtTask.focus_in_event.connect(() => {
 			if (!this.todoFile.hasActiveTask()) {
 				this.enableTaskActionButtons(false);
+				this.selectNoTasks();
 			}
 			return false;
 		});
@@ -227,6 +228,10 @@ public class Main : Window {
 
 		this.txtTask.buffer.changed.connect(() => {
 			this.filterTasks();
+			if (this.newTaskBeingEdited()) {
+				this.enablePriorityButton(true);
+			}
+			this.txtTask.has_focus = true;
 		});
 
 
@@ -350,11 +355,7 @@ public class Main : Window {
 			return;
 		}
 
-		
-
 		this.todoFile.unsetActiveTask();
-		
-		this.enableTaskActionButtons(true);
 
 		int index = -1;
 		var selection = this.taskListView.get_selection() as TreeSelection;
@@ -366,6 +367,8 @@ public class Main : Window {
 		} else {
 			TreePath path = model.get_path(iter);
 			index = int.parse(path.to_string());
+			this.enableTaskActionButtons(true);
+			this.editor.clear();
 		}
 
 		Zystem.debug("The selected index is: " + index.to_string());
@@ -374,23 +377,16 @@ public class Main : Window {
 			Zystem.debug("In filter view, so I'm exiting it.");
 			this.exitFilterView();
 		}
-
-		/*Task task = this.todoFile.getTaskAtIndex(index);
-		Zystem.debug(task.fullText);
-
-		this.todoFile.changeActiveTask(index);*/
 	}
 
 	/**
 	 * This method called on a double-click of a task, or hitting enter on a selected task.
 	 */
 	private void openTask(TreePath path, TreeViewColumn col) {
-		// activeTask is decided when the row was selected or clicked first time
-		// NO, THAT'S NOT TRUE ANYMORE! DON'T LISTEN TO THAT ^^^
-
-		this.setActiveTask();
+		this.setActiveTask();   // Loads selected task as active task
 		
 		this.editor.startNewTask(this.todoFile.getActiveTaskText()); // Load task text
+		this.txtTask.has_focus = true;
     }
 
 	private void setActiveTask() {
@@ -598,15 +594,49 @@ public class Main : Window {
 	}
 
 	private void prioritizeSelectedTask(char priority) {
-		this.setActiveTask();
-		this.todoFile.prioritizeActiveTask(priority);
-		this.loadListAndStartNew();
+		// This needs to work when there's a new task being edited also. Tricky!
+		
+		// Handle new task being edited, existing task being edited, and existing task selected.
+
+		if (this.newTaskBeingEdited() || this.existingTaskBeingEdited()) {
+			string text = this.editor.getText();
+			this.editor.clear();
+			this.editor.prepend(Task.changePriorityOnTaskText(text, priority));
+		} else {
+			this.setActiveTask();
+			this.todoFile.prioritizeActiveTask(priority);
+			this.loadListAndStartNew();
+		}
 	}
 
 	private void clearSelectedTaskPriority() {
-		this.setActiveTask();
-		this.todoFile.clearActiveTaskPriority();
-		this.loadListAndStartNew();
+		// This needs to work when there's a new task being edited also. Tricky!
+		
+		// Handle new task being edited, existing task being edited, and existing task selected.
+
+		if (this.newTaskBeingEdited() || this.existingTaskBeingEdited()) {
+			string text = this.editor.getText();
+			this.editor.clear();
+			this.editor.prepend(Task.clearPriorityOnTaskText(text));
+		} else {
+			this.setActiveTask();
+			this.todoFile.clearActiveTaskPriority();
+			this.loadListAndStartNew();
+		}
+	}
+
+	private bool noTaskSelected() {
+		var selection = this.taskListView.get_selection() as TreeSelection;
+		selection.set_mode(SelectionMode.SINGLE);
+		TreeModel model;
+		TreeIter iter;
+		return !selection.get_selected(out model, out iter);
+	}
+
+	private void selectNoTasks() {
+		//this.todoFile.unsetActiveTask(); // Done by taskSelected.
+		var selection = this.taskListView.get_selection() as TreeSelection;
+		selection.unselect_all();
 	}
 
 	private void manualReloadTodoFile() {
@@ -713,11 +743,24 @@ public class Main : Window {
 	}
 
 	private void enableTaskActionButtons(bool isEnabled) {
+		Zystem.debug("Enable task action buttons: " + isEnabled.to_string());
 //		if (!this.listIsFiltered) {
 			this.completeButton.set_sensitive(isEnabled);
 			this.deleteButton.set_sensitive(isEnabled);
-			this.priorityButton.set_sensitive(isEnabled);
+			//this.priorityButton.set_sensitive(isEnabled); // Priority button handled by enablePriorityButton function
 //		}
+	}
+
+	private void enablePriorityButton(bool isEnabled) {
+		this.priorityButton.set_sensitive(isEnabled);
+	}
+
+	private bool newTaskBeingEdited() {
+		return !this.todoFile.hasActiveTask() && this.noTaskSelected();  // Doing it this way, empty is ok?
+	}
+
+	private bool existingTaskBeingEdited() {
+		return this.todoFile.hasActiveTask() && !this.editor.isEmpty() && !this.noTaskSelected();
 	}
 
 	private void showKeyboardShortcuts() {
